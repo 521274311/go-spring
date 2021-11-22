@@ -19,9 +19,11 @@ package SpringGoRedis
 import (
 	"context"
 	"fmt"
+	"time"
 
 	g "github.com/go-redis/redis/v8"
 	"github.com/go-spring/spring-base/fastdev"
+	"github.com/go-spring/spring-core/conf"
 	"github.com/go-spring/spring-core/redis"
 )
 
@@ -31,7 +33,7 @@ type client struct {
 }
 
 // NewClient 创建 Redis 客户端
-func NewClient(config redis.Config) (redis.Client, error) {
+func NewClient(config conf.RedisClientConfig) (redis.Client, error) {
 
 	if fastdev.ReplayMode() {
 		return &redis.BaseClient{}, nil
@@ -39,9 +41,14 @@ func NewClient(config redis.Config) (redis.Client, error) {
 
 	address := fmt.Sprintf("%s:%d", config.Host, config.Port)
 	clt := g.NewClient(&g.Options{
-		Addr:     address,
-		Password: config.Password,
-		DB:       config.Database,
+		Addr:         address,
+		Username:     config.Username,
+		Password:     config.Password,
+		DB:           config.Database,
+		DialTimeout:  time.Duration(config.ConnectTimeout) * time.Millisecond,
+		ReadTimeout:  time.Duration(config.ReadTimeout) * time.Millisecond,
+		WriteTimeout: time.Duration(config.WriteTimeout) * time.Millisecond,
+		IdleTimeout:  time.Duration(config.IdleTimeout) * time.Millisecond,
 	})
 
 	if config.Ping {

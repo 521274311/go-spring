@@ -19,15 +19,15 @@ package record
 import (
 	"testing"
 
+	"github.com/go-spring/spring-core/conf"
 	"github.com/go-spring/spring-core/redis"
 	"github.com/go-spring/spring-redigo"
-	g "github.com/gomodule/redigo/redis"
 )
 
 func RunCase(t *testing.T, fn func(t *testing.T, c redis.Client)) {
-	conn, err := g.Dial("tcp", ":6379")
+	c, err := SpringRedigo.NewClient(conf.DefaultRedisClientConfig())
 	if err != nil {
 		t.Fatal(err)
 	}
-	fn(t, SpringRedigo.NewClient(conn))
+	fn(t, c)
 }

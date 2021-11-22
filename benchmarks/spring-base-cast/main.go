@@ -14,4 +14,6 @@
  * limitations under the License.
  */
 
-package jwt
+package main
+
+func main() {}

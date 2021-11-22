@@ -19,8 +19,10 @@ package SpringRedigo
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/go-spring/spring-base/fastdev"
+	"github.com/go-spring/spring-core/conf"
 	"github.com/go-spring/spring-core/redis"
 	g "github.com/gomodule/redigo/redis"
 )
@@ -31,14 +33,20 @@ type client struct {
 }
 
 // NewClient 创建 Redis 客户端
-func NewClient(config redis.Config) (redis.Client, error) {
+func NewClient(config conf.RedisClientConfig) (redis.Client, error) {
 
 	if fastdev.ReplayMode() {
 		return &redis.BaseClient{}, nil
 	}
 
 	address := fmt.Sprintf("%s:%d", config.Host, config.Port)
-	conn, err := g.Dial("tcp", address)
+	conn, err := g.Dial("tcp", address,
+		g.DialUsername(config.Username),
+		g.DialPassword(config.Password),
+		g.DialDatabase(config.Database),
+		g.DialConnectTimeout(time.Duration(config.ConnectTimeout)*time.Millisecond),
+		g.DialReadTimeout(time.Duration(config.ReadTimeout)*time.Millisecond),
+		g.DialWriteTimeout(time.Duration(config.WriteTimeout)*time.Millisecond))
 	if err != nil {
 		return nil, err
 	}
