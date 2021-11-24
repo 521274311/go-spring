@@ -23,6 +23,7 @@ import (
 	"html/template"
 	"reflect"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/spf13/cast"
@@ -36,7 +37,27 @@ func ToBool(i interface{}) bool {
 
 // ToBoolE casts an interface{} to a bool.
 func ToBoolE(i interface{}) (bool, error) {
-	return cast.ToBoolE(i)
+	if i == nil {
+		return false, nil
+	}
+	switch b := i.(type) {
+	case bool:
+		return b, nil
+	case *bool:
+		return *b, nil
+	case nil:
+		return false, nil
+	case int, int64, int32, int16, int8, uint, uint64, uint32, uint16, uint8,
+		*int, *int64, *int32, *int16, *int8, *uint, *uint64, *uint32, *uint16, *uint8:
+		return ToInt64(i) != 0, nil
+	case float32, float64,
+		*float32, *float64:
+		return ToFloat64(i) != 0, nil
+	case string, *string:
+		return strconv.ParseBool(ToString(i))
+	default:
+		return false, fmt.Errorf("unable to cast %#v of type %T to bool", i, i)
+	}
 }
 
 // ToInt casts an interface{} to an int.
@@ -53,7 +74,74 @@ func ToInt64(i interface{}) int64 {
 
 // ToInt64E casts an interface{} to an int64.
 func ToInt64E(i interface{}) (int64, error) {
-	return cast.ToInt64E(i)
+	if i == nil {
+		return 0, nil
+	}
+	switch s := i.(type) {
+	case int:
+		return int64(s), nil
+	case *int:
+		return int64(*s), nil
+	case int64:
+		return s, nil
+	case *int64:
+		return *s, nil
+	case int32:
+		return int64(s), nil
+	case *int32:
+		return int64(*s), nil
+	case int16:
+		return int64(s), nil
+	case *int16:
+		return int64(*s), nil
+	case int8:
+		return int64(s), nil
+	case *int8:
+		return int64(*s), nil
+	case uint:
+		return int64(s), nil
+	case *uint:
+		return int64(*s), nil
+	case uint64:
+		return int64(s), nil
+	case *uint64:
+		return int64(*s), nil
+	case uint32:
+		return int64(s), nil
+	case *uint32:
+		return int64(*s), nil
+	case uint16:
+		return int64(s), nil
+	case *uint16:
+		return int64(*s), nil
+	case uint8:
+		return int64(s), nil
+	case *uint8:
+		return int64(*s), nil
+	case float64:
+		return int64(s), nil
+	case *float64:
+		return int64(*s), nil
+	case float32:
+		return int64(s), nil
+	case *float32:
+		return int64(*s), nil
+	case string, *string:
+		v, err := strconv.ParseInt(ToString(s), 0, 0)
+		if err == nil {
+			return v, nil
+		}
+		return 0, fmt.Errorf("unable to cast %#v of type %T to int64", i, i)
+	case bool, *bool:
+		if ToBool(i) {
+			return 1, nil
+		}
+		return 0, nil
+	case nil:
+		return 0, nil
+	default:
+		return 0, fmt.Errorf("unable to cast %#v of type %T to int64", i, i)
+	}
 }
 
 // ToUint64 casts an interface{} to a uint64.
@@ -247,7 +335,28 @@ func ToDuration(i interface{}) time.Duration {
 
 // ToDurationE casts an interface{} to a time.Duration.
 func ToDurationE(i interface{}) (time.Duration, error) {
-	return cast.ToDurationE(i)
+	if i == nil {
+		return 0, nil
+	}
+	switch s := i.(type) {
+	case time.Duration:
+		return s, nil
+	case int, int64, int32, int16, int8, uint, uint64, uint32, uint16, uint8,
+		*int, *int64, *int32, *int16, *int8, *uint, *uint64, *uint32, *uint16, *uint8:
+		return time.Duration(ToInt64(s)), nil
+	case float32, float64,
+		*float32, *float64:
+		return time.Duration(ToFloat64(s)), nil
+	case string, *string:
+		v := ToString(s)
+		if strings.ContainsAny(v, "nsuµmh") {
+			return time.ParseDuration(v)
+		} else {
+			return time.ParseDuration(v + "ns")
+		}
+	default:
+		return 0, fmt.Errorf("unable to cast %#v of type %T to Duration", i, i)
+	}
 }
 
 // ToTime casts an interface{} to a time.Time.
